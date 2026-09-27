@@ -84,7 +84,7 @@ p.peeIn=0; p.jumps=1; p.z=30; p.vz=-100; steps(room,.4); assert.ok(p.peeing>0,'M
 assert.equal(room.snapshot().players[0].breed,'husky'); assert.equal(room.join({breed:'invalid'}).breed,'mestizo');
 const vm=require('node:vm'), fs=require('node:fs'); const artContext={window:{}}; vm.runInNewContext(fs.readFileSync('sprite.js','utf8'),artContext);
 const art=artContext.window.DogArt; const skins=Object.keys(art.breeds).map(b=>art.make('#cf9560',b));
-assert.ok(skins.every(art.valid)); assert.equal(new Set(skins.map(s=>JSON.stringify(s))).size,5,'Distinct breed sprites');
+assert.ok(skins.every(art.valid)); assert.equal(new Set(skins.map(s=>JSON.stringify(s))).size,6,'Distinct breed sprites');
 
 async function integration() {
   const { server, sessions, drop } = require('./server.cjs');

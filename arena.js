@@ -48,7 +48,7 @@
   }
   $('undo').onclick = () => { if (history.length) { pixels = history.pop(); drawEditor(); save(); } };
   $('reset-skin').onclick = () => { remember(); pixels = art.make('#cf9560', breed); drawEditor(); save(); };
-  $('recolor').onclick = () => { remember(); const base = art.make('#cf9560', breed); pixels = pixels.map((c, i) => base[i] === ({corgi:'#dca45f',dalmata:'#f3eee4',husky:'#8c9ba4',salchicha:'#9d6443'}[breed] || '#cf9560') ? brush : c); drawEditor(); save(); };
+  $('recolor').onclick = () => { remember(); const base = art.make('#cf9560', breed); pixels = pixels.map((c, i) => base[i] === ({corgi:'#dca45f',dalmata:'#f3eee4',husky:'#8c9ba4',salchicha:'#9d6443',bordercollie:'#303b40'}[breed] || '#cf9560') ? brush : c); drawEditor(); save(); };
   $('fill-color').onclick = () => { remember(); pixels = pixels.map(c => c ? brush : null); drawEditor(); save(); };
   $('nickname').addEventListener('change', save); drawEditor();
   

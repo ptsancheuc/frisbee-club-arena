@@ -18,7 +18,7 @@ class Arena {
     if ([...this.players.values()].some(p => p.bot)) return;
     const names = ['Chispa', 'Toby', 'Luna', 'Pecas', 'Roco', 'Nube'];
     const colors = ['#df8953', '#8c705c', '#b4a0cc', '#e1c78b', '#6b9eb7', '#e6ddd0'];
-    names.forEach((name, i) => { const p = this.join({ name, color: colors[i], breed: ['mestizo','corgi','dalmata','husky','salchicha'][i%5] }); p.bot = true; p.brain = { next: 0, target: null, thirsty: false, style: i }; });
+    names.forEach((name, i) => { const p = this.join({ name, color: colors[i], breed: ['mestizo','corgi','dalmata','husky','salchicha','bordercollie'][i%6] }); p.bot = true; p.brain = { next: 0, target: null, thirsty: false, style: i }; });
   }
   think(p) {
     const ai = p.brain; if (this.time < ai.next) return; ai.next = this.time + .15;
@@ -87,7 +87,7 @@ class Arena {
   join(profile = {}) {
     if ([...this.players.values()].filter(p => !p.bot).length >= MAX_PLAYERS) throw new Error('La sala está llena (24 perros). Prueba otra sala.');
     const id = randomBytes(8).toString('hex'), token = randomBytes(24).toString('hex');
-    const p = { id, token, name: cleanName(profile.name), breed: ['mestizo','corgi','dalmata','husky','salchicha'].includes(profile.breed) ? profile.breed : 'mestizo', color: color(profile.color) ? profile.color : '#cf9560', skin: cleanSkin(profile.skin), mass: START_MASS, score: 0, caught: 0, tags: 0, bestCombo: 0, facing: 1, input: { x: 0, y: 0, boost: false }, lastInput: this.time, lastSeen: Date.now(), lastSeq: -1, notice: '¡Bienvenido al parque!', noticeUntil: this.time + 4, connected: true };
+    const p = { id, token, name: cleanName(profile.name), breed: ['mestizo','corgi','dalmata','husky','salchicha','bordercollie'].includes(profile.breed) ? profile.breed : 'mestizo', color: color(profile.color) ? profile.color : '#cf9560', skin: cleanSkin(profile.skin), mass: START_MASS, score: 0, caught: 0, tags: 0, bestCombo: 0, facing: 1, input: { x: 0, y: 0, boost: false }, lastInput: this.time, lastSeen: Date.now(), lastSeq: -1, notice: '¡Bienvenido al parque!', noticeUntil: this.time + 4, connected: true };
     this.spawn(p); this.players.set(id, p); this.lastActive = Date.now(); return p;
   }
   pee(p) {
