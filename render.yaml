@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: frisbee-club-arena
+    runtime: node
+    plan: free
+    region: virginia
+    buildCommand: npm run check && npm test
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.21.0
+      - key: NODE_ENV
+        value: production

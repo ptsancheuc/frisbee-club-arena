@@ -1,0 +1,11 @@
+.git
+.codex
+.agents
+.openai
+node_modules
+.env
+*.log
+*.zip
+deploy
+*.test.cjs
+test.cjs

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f3e9">
+  <title>Frisbee Club — Un buen perro, un gran salto</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Frisbee Club, inicio"><span class="brand-icon">✦</span> frisbee<span class="brand-light">club</span><span class="brand-dot">®</span></a>
+      <span class="top-label"><i></i> PEQUEÑOS JUEGOS. GRANDES COLAS.</span>
+      <button class="sound-button" id="sound" aria-pressed="false" aria-label="Activar sonido"><span id="sound-icon">♫</span><span id="sound-label">SONIDO OFF</span></button>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div class="eyebrow"><span class="pill">EL PARQUE ESTÁ ABIERTO</span><span class="edition">MINIJUEGO 001 / 8-BIT EDITION</span></div>
+        <h1>Un buen perro.<br>Un <em>gran salto.</em><svg class="spark" width="57" height="61" viewBox="0 0 57 61" aria-hidden="true"><path d="M27 3v16M48 14 37 25M54 36H39M8 17l10 10" stroke="currentColor" stroke-width="6"/></svg></h1>
+        <p>Cuatro patas, un frisbee y cero preocupaciones.<br class="mobile-break"> Salta, atrapa y bate tu récord.</p>
+        <div class="hero-stamp" aria-hidden="true"><span>100% BUEN CHICO</span><svg viewBox="0 0 64 64"><path d="M18 36c-12 16 0 22 14 16 14 6 26 0 14-16-9-12-19-12-28 0"/><ellipse cx="12" cy="26" rx="7" ry="10" transform="rotate(-25 12 26)"/><ellipse cx="25" cy="15" rx="7" ry="10"/><ellipse cx="41" cy="15" rx="7" ry="10"/><ellipse cx="53" cy="28" rx="7" ry="10" transform="rotate(25 53 28)"/></svg><span>APROBADO POR PERROS</span></div>
+      </section>
+
+      <section class="arcade" aria-label="Juego Frisbee Club">
+        <div class="game-top">
+          <div class="park-label"><span class="live-dot"></span> PARQUE PATITAS <span class="park-number">/ 01</span></div>
+          <div class="stats" aria-live="off">
+            <div class="stat"><span>PUNTOS</span><strong id="score">000</strong></div>
+            <div class="stat"><span>RÉCORD <span class="small-star">✦</span></span><strong id="best">000</strong></div>
+            <div class="stat time-stat"><span>TIEMPO</span><strong><span id="time">60</span><small>s</small></strong></div>
+          </div>
+        </div>
+
+        <div class="run-strip"><span id="level">01 · PASEO TRANQUILO</span><div class="round-track" aria-hidden="true"><span id="round-progress"></span></div><span id="multiplier">COMBO ×1</span></div>
+        <div class="game-screen" id="screen">
+          <canvas id="game" width="960" height="420" tabindex="0" aria-label="Un perro salta en el parque para atrapar frisbees. Usa las flechas para moverte y espacio para saltar."></canvas>
+          <span class="screen-tag">UN DÍA PERFECTO PARA JUGAR</span>
+          <button class="pause-button hidden" id="pause" aria-label="Pausar juego">Ⅱ</button>
+          <div class="overlay" id="overlay">
+            <div class="overlay-content">
+              <div class="pixel-caption" id="overlay-caption">¡HEY, HUMANO!</div>
+              <h2 id="overlay-title">¿Lanzamos uno?</h2>
+              <p id="overlay-text">Salta, encadena trucos y aterriza para cobrar. El parque se acelera… ¡y el gato anda suelto!</p>
+              <div id="result-stats" class="result-stats hidden"></div>
+              <button class="play-button" id="play"><span id="play-label">¡A JUGAR!</span><span aria-hidden="true">↗</span></button>
+              <span class="start-hint" id="start-hint">O PULSA ESPACIO PARA EMPEZAR</span>
+            </div>
+          </div>
+          <div class="combo" id="combo" aria-live="polite"></div>
+          <div class="hazard" id="hazard" role="status"></div>
+          <div class="trick-hud hidden" id="trick-hud"><strong id="trick-name"></strong><span id="trick-points"></span></div>
+          <div class="touch-controls"><button id="left" aria-label="Mover a la izquierda">←</button><button id="right" aria-label="Mover a la derecha">→</button><button id="trick-spin" aria-label="Truco: voltereta; con derecha giro 360; con izquierda backflip">GIRO</button><button id="trick-grab" aria-label="Agarre de patitas">AGARRE</button><button id="jump">SALTAR ↑</button></div>
+        </div>
+
+        <div class="game-bottom"><span><span class="little-paw">✦</span> LA FELICIDAD SE ATRAPA EN EL AIRE.</span><span class="game-status" id="status">LISTO CUANDO TÚ LO ESTÉS <i></i></span></div>
+      </section>
+
+      <section class="instructions" aria-label="Cómo jugar">
+        <div class="instruction"><div class="key-group"><kbd>←</kbd><kbd>→</kbd></div><div><h3>Corre a tu aire</h3><p>Flechas o A / D para moverte</p></div></div>
+        <div class="instruction"><div class="key-group"><kbd class="space-key">ESPACIO</kbd></div><div><h3>Un salto de alegría</h3><p>Pulsa otra vez para un doble salto</p></div></div>
+        <div class="instruction"><div class="frisbee-symbol" aria-hidden="true"></div><div><h3>¡Ese es un buen chico!</h3><p>Encadena 3 / 6 / 9 capturas: ×2 / ×3 / ×4</p></div></div>
+      </section>
+      <section class="trick-guide" aria-label="Guía de trucos">
+        <div class="trick-intro"><span class="pill">NUEVO · FREESTYLE</span><h2>Cuatro patas. <br>Mil formas de volar.</h2><p>Haz los trucos en el aire, deja que termine cada giro y encadénalos antes de aterrizar. La variedad multiplica; repetir da menos puntos.</p></div>
+        <div class="trick-recipes">
+          <div><span><kbd>X</kbd></span><strong>Voltereta <small>80 pts</small></strong></div>
+          <div><span><kbd>→</kbd> + <kbd>X</kbd></span><strong>Giro 360 <small>60 pts</small></strong></div>
+          <div><span><kbd>←</kbd> + <kbd>X</kbd></span><strong>Backflip <small>90 pts</small></strong></div>
+          <div><span><kbd>Z</kbd></span><strong>Agarre de patitas <small>40 pts</small></strong></div>
+          <p class="special-recipe">✦ HUESO DE ORO: 360 → agarre → backflip.<br><span>+200 base y un multiplicador extra. Usa el doble salto para ganar tiempo.</span></p>
+        </div>
+        <p class="trick-note">En celular: GIRO equivale a X, AGARRE a Z. Mantén ← o → al pulsar GIRO. Atrapar frisbees en el aire añade 25 puntos base al combo. Hasta 5 trucos por salto. Un giro incompleto, el barro o un susto pierden los puntos del combo; los puntos ya ganados se conservan.</p>
+      </section>
+      <section class="field-guide" aria-label="Guía de objetos"><div><span class="guide-icon orange">▬</span><strong>El clásico</strong><span>10 puntos</span></div><div><span class="guide-icon gold">✦</span><strong>El dorado</strong><span>30 puntos × combo</span></div><div><span class="guide-icon blue">◷</span><strong>Tiempo extra</strong><span>+3 s · máximo +12 s</span></div><div><span class="guide-icon mud">≈</span><strong>¡Cuidado, barro!</strong><span>Salta para conservar tu combo</span></div></section>
+      <p class="danger-note">¡MIAU! El gato avisa antes de cruzar: sáltalo o aléjate para evitar el susto. Cada segundo aumenta la velocidad y la frecuencia de los obstáculos. Desde los 30 s, los frisbees también llegan por la izquierda.</p>
+    </main>
+    <footer><span>HECHO PARA JUGAR. SIN PRISAS. SIN CORREA.</span><span>EST. 2026 <span class="footer-flower">✳</span> FRISBEE CLUB</span></footer>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>

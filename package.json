@@ -1,0 +1,1 @@
+{"name":"frisbee-club","version":"2.0.0","private":true,"description":"Arena multijugador de perros, frisbees y pixel art","engines":{"node":">=22"},"scripts":{"start":"node server.cjs","check":"node --check game.js && node --check server.cjs && node --check arena-core.cjs && node --check arena.js && node --check sprite.js","test":"node test.cjs && node arena.test.cjs"}}

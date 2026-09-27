@@ -1,0 +1,23 @@
+services:
+  game:
+    build: .
+    restart: unless-stopped
+    expose:
+      - "3000"
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      GAME_DOMAIN: ${GAME_DOMAIN:?Define GAME_DOMAIN in .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - game
+volumes:
+  caddy_data:
+  caddy_config:
