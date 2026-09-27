@@ -1,5 +1,7 @@
 # Frisbee Club
 
+Jugar online: https://frisbee-club-arena.onrender.com/?room=parque
+
 ## Arena multijugador (nuevo)
 
 `npm start` abre la arena en `/`; el juego individual anterior está en `/solo.html`. Node.js 22 o superior. La arena necesita el servidor y no funciona abriendo index.html directamente.
@@ -15,7 +17,7 @@
 
 Servidor autoritativo a 20 Hz y estados a 10 Hz mediante SSE. El cliente solo envía controles: posición, masa y puntos se calculan en el servidor. Las salas tienen códigos compartibles, no contraseñas. No hay pausa online. Al desconectarse se detienen los controles y la sesión caduca; las partidas no se conservan tras reiniciar el servidor.
 
-Publicación: consulta [DEPLOY.md](DEPLOY.md). Incluye Dockerfile y ejemplo de proxy HTTPS; la publicación real está pendiente de destino/acceso. `npm test` incluye pruebas de dos clientes reales conectados al servidor.
+Publicación: consulta [DEPLOY.md](DEPLOY.md). Incluye Dockerfile y ejemplo de proxy HTTPS; publicado en Render (plan gratuito). `npm test` incluye pruebas de dos clientes reales conectados al servidor.
 
 ## Modo individual
 

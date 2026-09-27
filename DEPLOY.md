@@ -1,6 +1,6 @@
 # Publicar Frisbee Club Arena
 
-Estado: preparado y probado localmente. Aún no publicado en internet: falta seleccionar el dominio/hosting del propietario. El enlace 192.168.x.x solo funciona en la red local.
+Estado: publicado en https://frisbee-club-arena.onrender.com/?room=parque el 27 de septiembre de 2026. Repositorio: https://github.com/ptsancheuc/frisbee-club-arena. Verificado mediante HTTPS con dos clientes, seis bots, SSE y movimiento remoto.
 
 ## Requisitos de esta implementación
 
@@ -16,7 +16,7 @@ Estado: preparado y probado localmente. Aún no publicado en internet: falta sel
 
 Se incluye `render.yaml` para un Web Service Node con plan `free`, región Virginia, comprobaciones antes del despliegue y `/health` como health check. Configuración basada en la [referencia oficial de Blueprints](https://render.com/docs/blueprint-spec).
 
-El siguiente paso es crear un repositorio dedicado en la cuenta GitHub del propietario, subir este proyecto y conectar ese repositorio a un Blueprint de Render. El inicio de sesión del navegador está pendiente. No se ha creado el repositorio ni el servicio, ni se ha generado una URL pública.
+Servicio creado con repositorio público, rama main, runtime Node 24, plan Free, build npm run check && npm test y arranque npm start. Servicio Render: srv-das8h9vpn0mc73f9j4jg. Las futuras versiones requieren un despliegue manual en Render; no se conectó la aplicación GitHub para auto-deploy.
 
 No hace falta comprar dominio: Render asigna una URL `.onrender.com`. El plan gratuito puede suspenderse tras 15 minutos sin tráfico y reiniciarse al recibir visitas; las salas en memoria se reinician. Los límites están en la [documentación del plan gratuito](https://render.com/docs/free).
 
