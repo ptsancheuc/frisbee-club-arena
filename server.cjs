@@ -20,8 +20,7 @@ const server = http.createServer(async (req, res) => {
       const ip = req.socket.remoteAddress, now = Date.now(), limit = limits.get(ip) || { count: 0, start: now };
       if (now - limit.start > 60000) { limit.count = 0; limit.start = now; }
       if (++limit.count > 30) return json(res, 429, { error: 'Demasiadas entradas. Espera un minuto.' }); limits.set(ip, limit);
-      const data = await body(req), code = String(data.room || 'parque').toLowerCase();
-      if (!/^[a-z0-9-]{3,20}$/.test(code)) return json(res, 400, { error: 'Sala: usa de 3 a 20 letras, números o guiones.' });
+      const data = await body(req), code = 'parque';
       if (!rooms.has(code)) { if (rooms.size >= 40) return json(res, 503, { error: 'Servidor lleno. Inténtalo más tarde.' }); const arena = new Arena(code); arena.addBots(); rooms.set(code, arena); }
       const room = rooms.get(code), player = room.join(data); sessions.set(player.token, { room, player });
       return json(res, 200, { token: player.token, id: player.id, room: code });

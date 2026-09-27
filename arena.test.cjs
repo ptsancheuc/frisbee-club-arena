@@ -11,7 +11,7 @@ room.input(p, { seq: 1, x: -1, y: 0 }); assert.equal(p.input.x, 1, 'Replay seque
 steps(room, 1); assert.equal(p.input.x, 0, 'Stale controls stop automatically');
 p.mass = 50; room.input(p, { seq: 2, x: 1, y: 1, boost: true }); assert.ok(Math.hypot(p.input.x, p.input.y) <= 1.001); steps(room, .2); assert.ok(p.mass < 50, 'Turbo consumes mass');
 room = setup(); const big = room.join(), small = room.join(); big.x = small.x = 500; big.y = small.y = 500; big.mass = 100; small.mass = 30; big.shield = small.shield = 0;
-room.step(); assert.equal(big.tags, 1); assert.equal(small.mass, 18); assert.ok(small.shield > 0); assert.ok(big.mass > 100);
+room.step(); assert.equal(big.tags, 0, 'No attack outside pee vulnerability'); room.pee(small); room.step(); assert.equal(big.tags, 1); assert.equal(small.mass, 18); assert.ok(small.shield > 0); assert.ok(big.mass > 100);
 big.x = small.x; big.y = small.y; room.step(); assert.equal(big.tags, 1, 'Spawn shield prevents repeated tags');
 small.shield = 0; small.z = 100; small.jumps = 1; small.vz = 0; big.x = small.x; big.y = small.y; room.step(); assert.equal(big.tags, 1, 'Jump avoids getting tagged');
 room = setup(); p = room.join(); room.input(p, { seq: 1, actions: ['jump', 'spin'] }); steps(room, .4); assert.equal(p.score, 0); assert.equal(p.air.points, 60); steps(room, .5); assert.equal(p.score, 60, 'Tricks bank on landing');
@@ -63,7 +63,7 @@ assert.equal(room.snapshot().players[0].peeing,p.peeing); assert.equal(room.snap
 steps(room,13); assert.equal(room.puddles.length,0,'Puddles expire');
 steps(room,7); room.input(p,{seq:7,actions:['pee']}); assert.equal(room.puddles.length,1,'Can pee again after cooldown');
 room.spawn(p); assert.equal(p.water,100); assert.equal(p.peeing,0);
-p.water=7; room.input(p,{seq:8,actions:['pee']}); assert.equal(p.peeing,0,'Needs enough water');
+p.water=7; room.input(p,{seq:8,actions:['pee']}); assert.equal(p.peeing,3,'Pee remains possible with little water'); assert.equal(p.water,0);
 
 room = new Arena('bots', rng); room.addBots(); room.addBots();
 assert.equal(room.players.size,6,'Exactly six bots, no duplicates');
@@ -75,6 +75,16 @@ room=setup(); room.addBots(); const thirsty=[...room.players.values()][0];
 thirsty.water=10; thirsty.x=room.bowls[0].x; thirsty.y=room.bowls[0].y;
 steps(room,2); assert.ok(thirsty.water>50,'Thirsty bot stops and drinks');
 const publicBot=room.snapshot().players[0]; assert.equal(publicBot.bot,true); assert.equal(publicBot.brain,undefined);
+
+room=setup(); p=room.join({breed:'husky'}); p.water=0; p.peeIn=.05; room.step();
+assert.equal(p.peeing,3,'Mandatory pee even without water'); assert.equal(p.shield,0);
+room.input(p,{seq:0,actions:['jump']}); assert.equal(p.jumps,0,'Cannot jump during vulnerability');
+steps(room,3.1); assert.equal(p.peeing,0); assert.ok(p.peeIn>44);
+p.peeIn=0; p.jumps=1; p.z=30; p.vz=-100; steps(room,.4); assert.ok(p.peeing>0,'Mandatory pee on landing');
+assert.equal(room.snapshot().players[0].breed,'husky'); assert.equal(room.join({breed:'invalid'}).breed,'mestizo');
+const vm=require('node:vm'), fs=require('node:fs'); const artContext={window:{}}; vm.runInNewContext(fs.readFileSync('sprite.js','utf8'),artContext);
+const art=artContext.window.DogArt; const skins=Object.keys(art.breeds).map(b=>art.make('#cf9560',b));
+assert.ok(skins.every(art.valid)); assert.equal(new Set(skins.map(s=>JSON.stringify(s))).size,5,'Distinct breed sprites');
 
 async function integration() {
   const { server, sessions, drop } = require('./server.cjs');
@@ -96,7 +106,7 @@ async function integration() {
     }
     const readA = await connect(a.token), readB = await connect(b.token), readC = await connect(c.token);
     const initialA = await readA(), initialB = await readB(), initialC = await readC();
-    assert.equal(initialA.players.length, 8); assert.equal(initialB.players.length, 8); assert.equal(initialC.players.length, 7); assert.equal(initialA.players.filter(p=>p.bot).length,6);
+    assert.equal(initialA.players.length, 9); assert.equal(initialB.players.length, 9); assert.equal(initialC.players.length, 9); assert.equal(a.room, c.room); assert.equal(initialA.players.filter(p=>p.bot).length,6);
     assert.deepEqual(initialB.players.find(p => p.id === a.id).skin, Array(320).fill('#ffaa00'), 'Other clients see pixel art');
     const before = sessions.get(a.token).player.x;
     assert.equal((await post('/api/input', { seq: 1, x: 1, y: 0 }, a.token)).status, 200);
@@ -105,14 +115,14 @@ async function integration() {
     const oldDisc = initialB.discs[0], movedDisc = latest.discs.find(f => f.id === oldDisc.id);
     assert.ok(movedDisc && Math.hypot(movedDisc.x - oldDisc.x, movedDisc.y - oldDisc.y) > 1, 'Remote clients receive flying discs');
     assert.equal((await post('/api/input', { seq: 1, x: 1 }, 'bad')).status, 401);
-    assert.equal((await post('/api/join', { room: '../escape' })).status, 400);
+    assert.equal((await post('/api/join', { room: '../escape' })).status, 200, 'All room names map to public park');
     assert.equal((await fetch(base + '/server.cjs')).status, 404);
     assert.equal((await fetch(base + '/arena.js')).status, 200);
     assert.equal((await fetch(base + '/solo.html')).status, 200);
     assert.equal((await fetch(base + '/health')).status, 200);
     assert.equal((await fetch(base + '/api/join', { method: 'POST', headers: { Origin: 'https://unrelated.invalid' }, body: '{}' })).status, 403);
     await post('/api/leave', {}, a.token); assert.equal(sessions.has(a.token), false);
-    console.log('Passed: growth, authoritative movement, replay protection, boost, tags, shields, jumps, tricks, fright, two real streaming clients, room isolation, pixel art replication, auth, static allowlist and disconnect.');
+    console.log('Passed: growth, authoritative movement, replay protection, boost, tags, shields, jumps, tricks, fright, two real streaming clients, single public park, pixel art replication, auth, static allowlist and disconnect.');
   } finally {
     streams.forEach(s => s.abort()); for (const token of sessions.keys()) drop(token);
     await new Promise(resolve => server.close(resolve));

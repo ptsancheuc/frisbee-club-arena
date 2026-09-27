@@ -18,7 +18,7 @@ class Arena {
     if ([...this.players.values()].some(p => p.bot)) return;
     const names = ['Chispa', 'Toby', 'Luna', 'Pecas', 'Roco', 'Nube'];
     const colors = ['#df8953', '#8c705c', '#b4a0cc', '#e1c78b', '#6b9eb7', '#e6ddd0'];
-    names.forEach((name, i) => { const p = this.join({ name, color: colors[i] }); p.bot = true; p.brain = { next: 0, target: null, thirsty: false, style: i }; });
+    names.forEach((name, i) => { const p = this.join({ name, color: colors[i], breed: ['mestizo','corgi','dalmata','husky','salchicha'][i%5] }); p.bot = true; p.brain = { next: 0, target: null, thirsty: false, style: i }; });
   }
   think(p) {
     const ai = p.brain; if (this.time < ai.next) return; ai.next = this.time + .15;
@@ -37,7 +37,7 @@ class Arena {
         target = this.bowls.slice().sort((a,b)=>distance(a)-distance(b))[0];
         if (target && distance(target)<55) target=null;
       } else {
-        const prey = [...this.players.values()].find(q => q!==p && q.shield<=0 && p.shield<=0 && p.mass>=q.mass*1.3 && q.z<30 && distance(q)<160);
+        const prey = [...this.players.values()].find(q => q!==p && q.peeing>0 && q.shield<=0 && p.shield<=0 && p.mass>=q.mass*1.3 && q.z<30 && distance(q)<160);
         if (prey) target=prey;
         else {
           let disc = this.discs.find(f=>f.id===ai.target);
@@ -82,13 +82,18 @@ class Arena {
       p.x = 100 + this.random() * (WIDTH - 200); p.y = 100 + this.random() * (HEIGHT - 200);
       if (![...this.players.values()].some(other => other !== p && Math.hypot(other.x - p.x, other.y - p.y) < radius(other) + 160)) break;
     }
-    p.water = 100; p.peeing = 0; p.peeCooldown = 0; p.drinking = false; p.z = 0; p.vz = 0; p.jumps = 0; p.shield = 5; p.mass = START_MASS; p.air = null; p.trick = null; p.scared = 0;
+    p.peeIn = 45; p.water = 100; p.peeing = 0; p.peeCooldown = 0; p.drinking = false; p.z = 0; p.vz = 0; p.jumps = 0; p.shield = 5; p.mass = START_MASS; p.air = null; p.trick = null; p.scared = 0;
   }
   join(profile = {}) {
     if ([...this.players.values()].filter(p => !p.bot).length >= MAX_PLAYERS) throw new Error('La sala está llena (24 perros). Prueba otra sala.');
     const id = randomBytes(8).toString('hex'), token = randomBytes(24).toString('hex');
-    const p = { id, token, name: cleanName(profile.name), color: color(profile.color) ? profile.color : '#cf9560', skin: cleanSkin(profile.skin), mass: START_MASS, score: 0, caught: 0, tags: 0, bestCombo: 0, facing: 1, input: { x: 0, y: 0, boost: false }, lastInput: this.time, lastSeen: Date.now(), lastSeq: -1, notice: '¡Bienvenido al parque!', noticeUntil: this.time + 4, connected: true };
+    const p = { id, token, name: cleanName(profile.name), breed: ['mestizo','corgi','dalmata','husky','salchicha'].includes(profile.breed) ? profile.breed : 'mestizo', color: color(profile.color) ? profile.color : '#cf9560', skin: cleanSkin(profile.skin), mass: START_MASS, score: 0, caught: 0, tags: 0, bestCombo: 0, facing: 1, input: { x: 0, y: 0, boost: false }, lastInput: this.time, lastSeen: Date.now(), lastSeq: -1, notice: '¡Bienvenido al parque!', noticeUntil: this.time + 4, connected: true };
     this.spawn(p); this.players.set(id, p); this.lastActive = Date.now(); return p;
+  }
+  pee(p) {
+    p.water = Math.max(0, p.water - 8); p.peeing = 3; p.peeCooldown = 20; p.peeIn = 45; p.shield = 0;
+    this.puddles.push({ id: ++this.puddleId, x: p.x - p.facing * 20, y: p.y + 6, expires: this.time + 12 });
+    this.notice(p, '¡Meando! Estás vulnerable durante 3 s');
   }
   notice(p, text) { p.notice = text; p.noticeUntil = this.time + 2.5; }
   input(p, data) {
@@ -101,13 +106,10 @@ class Arena {
       if (action === 'pee') {
         if (p.peeCooldown > 0 || p.peeing > 0) continue;
         if (p.jumps || p.scared > 0) { this.notice(p, 'Espera a estar en el suelo'); continue; }
-        if (p.water < 8) { this.notice(p, 'Busca un bebedero primero'); continue; }
-        p.water -= 8; p.peeing = 1.2; p.peeCooldown = 20;
-        this.puddles.push({ id: ++this.puddleId, x: p.x - p.facing * 20, y: p.y + 6, expires: this.time + 12 });
-        this.notice(p, '¡Territorio marcado!'); continue;
+        this.pee(p); continue;
       }
       if (p.peeing > 0) continue;
-      if (action === 'jump' && p.jumps < 2 && p.scared <= 0) {
+      if (action === 'jump' && p.peeIn > 0 && p.jumps < 2 && p.scared <= 0) {
         if (!p.jumps) p.air = { ids: [], points: 0, catches: 0, failed: false, special: false };
         p.vz = p.jumps ? 420 : 470; p.jumps++;
       } else if (Object.hasOwn(TRICKS, action) && p.jumps > 0 && p.scared <= 0 && !p.trick && p.air && !p.air.failed && p.air.ids.length < 5) p.trick = { id: action, t: 0 };
@@ -124,6 +126,8 @@ class Arena {
       if (this.time - p.lastInput > .45) p.input = { x: 0, y: 0, boost: false };
       p.shield = Math.max(0, p.shield - dt); p.scared = Math.max(0, p.scared - dt);
       p.peeing = Math.max(0, p.peeing - dt); p.peeCooldown = Math.max(0, p.peeCooldown - dt);
+      if (!p.peeing) p.peeIn = Math.max(0, p.peeIn - dt);
+      if (p.peeIn <= 0 && !p.jumps && !p.peeing) this.pee(p);
       const oldX = p.x, oldY = p.y;
       const boost = p.peeing <= 0 && p.input.boost && p.mass > START_MASS + 3 && p.scared <= 0;
       const speed = (210 / (1 + (radius(p) - 29) / 100)) * (boost ? 1.65 : 1) * (p.scared > 0 ? .4 : 1) * (.45 + .55 * p.water / 100) * (p.peeing > 0 ? 0 : 1);
@@ -166,14 +170,14 @@ class Arena {
       cat.y = clamp(cat.y + Math.sin(this.time * .31 + cat.phase) * 60 * dt, 70, HEIGHT - 70);
       const phase = (this.time + cat.phase) % 8; cat.warning = phase > 5 ? 8 - phase : 0;
       if (phase < 7.4) continue;
-      for (const p of this.players.values()) if (p.shield <= 0 && p.scared <= 0 && p.z < 60 && Math.hypot(p.x - cat.x, p.y - cat.y) < radius(p) + 80) {
+      for (const p of this.players.values()) if (p.shield <= 0 && p.scared <= 0 && !p.peeing && p.z < 60 && Math.hypot(p.x - cat.x, p.y - cat.y) < radius(p) + 80) {
         this.bail(p, '¡MIAU! Te asustaste: salta el círculo'); p.scared = 1.2; p.shield = 2; p.vz = 270; p.jumps = Math.max(1, p.jumps);
       }
     }
     const players = [...this.players.values()];
     for (let i = 0; i < players.length; i++) for (let j = i + 1; j < players.length; j++) {
       const a = players[i], b = players[j], big = a.mass >= b.mass ? a : b, small = big === a ? b : a;
-      if (big.shield > 0 || small.shield > 0 || big.z > 30 || small.z > 30 || big.mass < small.mass * 1.3) continue;
+      if (!small.peeing || big.peeing || big.shield > 0 || small.shield > 0 || big.z > 30 || small.z > 30 || big.mass < small.mass * 1.3) continue;
       if (Math.hypot(big.x - small.x, big.y - small.y) < radius(big) - radius(small) * .15) {
         const loot = Math.max(6, Math.floor(small.mass * .35)); big.mass = Math.min(2500, big.mass + loot); big.score += 100; big.tags++;
         this.notice(big, `¡Pillaste a ${small.name}! +${loot} masa`); this.spawn(small); this.notice(small, `${big.name} te pilló. Reapareces con protección.`);
@@ -182,7 +186,7 @@ class Arena {
   }
   snapshot() {
     return { room: this.code, width: WIDTH, height: HEIGHT, time: this.time, discs: this.discs, cats: this.cats, bowls: this.bowls, puddles: this.puddles,
-      players: [...this.players.values()].map(p => ({ id: p.id, bot: p.bot === true, name: p.name, color: p.color, skin: p.skin, x: p.x, y: p.y, z: p.z, water: p.water, drinking: p.drinking, peeing: p.peeing, peeCooldown: p.peeCooldown, mass: p.mass, score: p.score, caught: p.caught, tags: p.tags, bestCombo: p.bestCombo, facing: p.facing, shield: p.shield, scared: p.scared, trick: p.trick, airNames: p.air && !p.air.failed ? p.air.ids.map(id => TRICKS[id].name) : [], pending: p.air && !p.air.failed ? this.airValue(p) : 0, notice: p.noticeUntil > this.time ? p.notice : '', connected: p.connected })) };
+      players: [...this.players.values()].map(p => ({ id: p.id, bot: p.bot === true, breed: p.breed, peeIn: p.peeIn, name: p.name, color: p.color, skin: p.skin, x: p.x, y: p.y, z: p.z, water: p.water, drinking: p.drinking, peeing: p.peeing, peeCooldown: p.peeCooldown, mass: p.mass, score: p.score, caught: p.caught, tags: p.tags, bestCombo: p.bestCombo, facing: p.facing, shield: p.shield, scared: p.scared, trick: p.trick, airNames: p.air && !p.air.failed ? p.air.ids.map(id => TRICKS[id].name) : [], pending: p.air && !p.air.failed ? this.airValue(p) : 0, notice: p.noticeUntil > this.time ? p.notice : '', connected: p.connected })) };
   }
 }
 module.exports = { Arena, radius, cleanSkin, cleanName, WIDTH, HEIGHT, MAX_PLAYERS };

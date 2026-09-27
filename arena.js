@@ -1,13 +1,14 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id), art = window.DogArt;
+  let breed = 'mestizo';
   let pixels = art.make(), brush = '#cf9560', erasing = false, history = [], drawing = false, lastPixel = null, cursor = { x: 0, y: 0 }, showCursor = false;
-  try { const saved = JSON.parse(localStorage.getItem('frisbee-profile-v2')); if (saved) { if (art.valid(saved.skin)) pixels = saved.skin; if (saved.name) $('nickname').value = saved.name; } } catch (_) {}
-  const roomFromUrl = new URLSearchParams(location.search).get('room');
-  if (roomFromUrl && /^[a-z0-9-]{3,20}$/.test(roomFromUrl)) $('room').value = roomFromUrl;
+  try { const saved = JSON.parse(localStorage.getItem('frisbee-profile-v2')); if (saved) { if (Object.hasOwn(art.breeds, saved.breed)) breed = saved.breed; if (art.valid(saved.skin)) pixels = saved.skin; if (saved.name) $('nickname').value = saved.name; } } catch (_) {}
+  $('breed').value = breed;
+  $('breed').onchange = () => { remember(); breed = $('breed').value; pixels = art.make('#cf9560', breed); drawEditor(); save(); };
   const board = $('pixel-board'), paint = board.getContext('2d'), preview = $('preview').getContext('2d');
   function save() {
-    try { localStorage.setItem('frisbee-profile-v2', JSON.stringify({ name: $('nickname').value, skin: pixels })); $('saved').textContent = 'Diseño guardado en este dispositivo. Todos podrán verlo en la sala.'; }
+    try { localStorage.setItem('frisbee-profile-v2', JSON.stringify({ name: $('nickname').value, skin: pixels, breed })); $('saved').textContent = 'Diseño guardado en este dispositivo. Todos podrán verlo en la sala.'; }
     catch (_) { $('saved').textContent = 'Diseño listo. Este navegador no permite guardarlo al cerrar.'; }
   }
   function drawEditor() {
@@ -46,11 +47,11 @@
     button.onclick = () => { brush = color; $('paint-color').value = color; tool(false); }; $('palette').append(button);
   }
   $('undo').onclick = () => { if (history.length) { pixels = history.pop(); drawEditor(); save(); } };
-  $('reset-skin').onclick = () => { remember(); pixels = art.make(); drawEditor(); save(); };
-  $('recolor').onclick = () => { remember(); const base = art.make(); pixels = pixels.map((c, i) => base[i] === '#cf9560' ? brush : c); drawEditor(); save(); };
+  $('reset-skin').onclick = () => { remember(); pixels = art.make('#cf9560', breed); drawEditor(); save(); };
+  $('recolor').onclick = () => { remember(); const base = art.make('#cf9560', breed); pixels = pixels.map((c, i) => base[i] === ({corgi:'#dca45f',dalmata:'#f3eee4',husky:'#8c9ba4',salchicha:'#9d6443'}[breed] || '#cf9560') ? brush : c); drawEditor(); save(); };
   $('fill-color').onclick = () => { remember(); pixels = pixels.map(c => c ? brush : null); drawEditor(); save(); };
   $('nickname').addEventListener('change', save); drawEditor();
-  $('new-room').onclick = () => { $('room').value = 'patitas-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(0, 6); };
+  
 
   const canvas = $('world'), ctx = canvas.getContext('2d'), mini = $('minimap').getContext('2d');
   let session = null, events = null, timer = null, snapshot = null, rendered = new Map(), flying = new Map(), profiles = new Map(), keys = {}, joystick = { x: 0, y: 0 }, boosting = false, actions = [], seq = 0, inFlight = false, lastPacket = 0, joinedAt = 0, active = false, pendingJoin = false;
@@ -80,7 +81,7 @@
   $('join-form').addEventListener('submit', async e => {
     e.preventDefault(); if (pendingJoin) return; pendingJoin = true; $('join').disabled = true; $('join-error').textContent = ''; save();
     try {
-      const response = await fetch('/api/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: $('nickname').value, room: $('room').value.trim().toLowerCase(), color: brush, skin: pixels }), signal: AbortSignal.timeout(8000) });
+      const response = await fetch('/api/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: $('nickname').value, room: 'parque', breed, color: brush, skin: pixels }), signal: AbortSignal.timeout(8000) });
       const data = await response.json(); if (!response.ok) throw new Error(data.error || 'No se pudo entrar');
       session = data; active = true; seq = 0; lastPacket = 0; joinedAt = Date.now(); inFlight = false; clearInput();
       $('lobby').classList.add('hidden'); $('arena').classList.remove('hidden'); $('room-name').textContent = data.room; $('connection').textContent = 'Conectando con el parque…'; $('invite-link').classList.add('hidden');
@@ -136,7 +137,9 @@
     $('water-meter').value = me.water; $('water-value').textContent = water + '%';
     $('water-meter').parentElement.classList.toggle('low', water < 25);
     $('water-hint').textContent = me.drinking ? (water < 100 ? 'Tomando agua…' : '¡Agua completa!') : water < 25 ? '¡Tienes sed! Busca un bebedero azul.' : 'Detente junto a un bebedero para beber.';
-    $('pee').disabled = me.peeCooldown > 0 || me.water < 8 || me.z > 0;
+    $('pee').disabled = me.peeCooldown > 0 || me.z > 0;
+    $('pee-timer').textContent = me.peeing > 0 ? '¡VULNERABLE! ' + Math.ceil(me.peeing) + ' s' : 'Mear obligatorio en ' + Math.ceil(me.peeIn) + ' s';
+    $('pee-timer').classList.toggle('urgent', me.peeing > 0 || me.peeIn < 8);
     $('pee').textContent = me.peeing > 0 ? 'MARCANDO…' : me.peeCooldown > 0 ? 'MEAR · ' + Math.ceil(me.peeCooldown) + ' s' : 'MEAR · E';
     $('mass').textContent = Math.floor(me.mass); $('points').textContent = me.score; $('tags').textContent = me.tags;
     const humans = snapshot.players.filter(p => !p.bot).length, bots = snapshot.players.filter(p => p.bot).length;
@@ -162,7 +165,7 @@
       if (p.trick.id === 'spin') ctx.scale(Math.cos(progress * Math.PI * 2), 1); else if (p.trick.id === 'grab') ctx.scale(1.15, .75); else ctx.rotate(progress * Math.PI * 2 * (p.trick.id === 'backflip' ? -1 : 1)); ctx.translate(0, 8 * size);
     }
     if (p.peeing > 0) { ctx.rotate(-.12); rect(-8 * size, -7 * size, 6 * size, 2 * size, p.color); }
-    art.draw(ctx, p.skin || art.make(p.color), -10 * size, -16 * size + Math.sin(t * 5 + p.x) * 1.3, size); ctx.restore();
+    art.draw(ctx, p.skin || art.make(p.color, p.breed), -10 * size, -16 * size + Math.sin(t * 5 + p.x) * 1.3, size); ctx.restore();
     const label = `${p.name}${p.bot ? ' · IA' : p.id === session.id ? ' · TÚ' : ''}`;
     ctx.font = '600 12px sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = '#f5f3e9'; ctx.strokeText(label, p.x, p.y - p.z * .65 - 16 * size - 12); ctx.fillStyle = '#30452d'; ctx.fillText(label, p.x, p.y - p.z * .65 - 16 * size - 12);
     if (p.peeing > 0) for (let i=0;i<5;i++) rect(p.x - p.facing * (12+i*4), p.y - 12 + i*4 + Math.sin(t*18+i)*2, 3, 3, '#ddbd49');
